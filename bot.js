@@ -1,32 +1,35 @@
 require('dotenv').config();
-const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
-const bodyParser = require('body-parser');
+const TelegramBot = require('node-telegram-bot-api');
 const { google } = require('googleapis');
+const keys = require('./service-account-key.json'); // путь к вашему JSON-файлу
 
-const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const APP_URL = process.env.APP_URL;
-const GOOGLE_CLIENT_EMAIL = process.env.GOOGLE_CLIENT_EMAIL;
-const GOOGLE_PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n');
+const app = express();
+const port = process.env.PORT || 3000;
 
-const bot = new TelegramBot(TOKEN, {
-  webHook: {
-    port: process.env.PORT || 8443
-  }
+// Настройка сервера Express
+app.get('/', (req, res) => {
+  res.send('Bot is running!');
 });
 
-bot.setWebHook(`${APP_URL}/bot${TOKEN}`);
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
+
+// Замените на ваш токен бота
+const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const bot = new TelegramBot(TOKEN, { polling: true });
 
 const client = new google.auth.JWT(
-  GOOGLE_CLIENT_EMAIL,
+  keys.client_email,
   null,
-  GOOGLE_PRIVATE_KEY,
+  keys.private_key,
   ['https://www.googleapis.com/auth/spreadsheets']
 );
 
 const sheets = google.sheets({ version: 'v4', auth: client });
 
-const SPREADSHEET_ID = '1qNp9fVSdSV5pX_KLtgKkiSf6byl0LjEQOwmI3EU2BF0'; // ID вашей таблицы
+const SPREADSHEET_ID = process.env.SPREADSHEET_ID; // ID вашей таблицы
 
 async function getSheetData(sheetName, range = 'A2:D') {
   const request = {
@@ -96,17 +99,13 @@ bot.on('callback_query', async (callbackQuery) => {
         ],
       },
     };
-    if (message.text !== 'Выбери сцену:') {
-      bot.editMessageText('Выбери сцену:', { chat_id: message.chat.id, message_id: message.message_id, ...options });
-    }
+    bot.editMessageText('Выбери сцену:', { chat_id: message.chat.id, message_id: message.message_id, ...options });
   } else if (data === 'events') {
     const eventsData = await getSheetData('События');
     const dateIndexMap = getDateIndexMap(eventsData);
     const dateButtons = Object.keys(dateIndexMap).map(date => [{ text: date, callback_data: `event_date_${date}` }]);
 
-    if (message.text !== 'Выбери дату:') {
-      bot.editMessageText('Выбери дату:', { chat_id: message.chat.id, message_id: message.message_id, reply_markup: { inline_keyboard: [...dateButtons, [{ text: 'Назад', callback_data: 'back_to_main' }]] } });
-    }
+    bot.editMessageText('Выбери дату:', { chat_id: message.chat.id, message_id: message.message_id, reply_markup: { inline_keyboard: [...dateButtons, [{ text: 'Назад', callback_data: 'back_to_main' }]] } });
   } else if (data.startsWith('event_date_')) {
     const date = data.split('_')[2];
     const eventsData = await getSheetData('События');
@@ -118,9 +117,7 @@ bot.on('callback_query', async (callbackQuery) => {
       response += `<b>${row[1]}</b> - ${row[2]}\n<b>Место</b>: ${row[3]}\n\n`;
     });
 
-    if (message.text !== response) {
-      bot.editMessageText(response, { chat_id: message.chat.id, message_id: message.message_id, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: 'Назад', callback_data: 'events' }]] } });
-    }
+    bot.editMessageText(response, { chat_id: message.chat.id, message_id: message.message_id, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: 'Назад', callback_data: 'events' }]] } });
   } else if (data === 'back_to_main') {
     const welcomeMessage = "Привет, рейвер! Этот бот поможет тебе узнать расписание сетов на всех сценах Signalа. Выбери нужную сцену или получи инфо о событиях на территории.";
 
@@ -133,9 +130,7 @@ bot.on('callback_query', async (callbackQuery) => {
       },
     };
 
-    if (message.text !== welcomeMessage) {
-      bot.editMessageText(welcomeMessage, { chat_id: message.chat.id, message_id: message.message_id, ...options });
-    }
+    bot.editMessageText(welcomeMessage, { chat_id: message.chat.id, message_id: message.message_id, ...options });
   } else if (data.startsWith('stage_')) {
     const stage = data.split('_')[1];
     const stageData = await getSheetData(stage);
@@ -148,9 +143,7 @@ bot.on('callback_query', async (callbackQuery) => {
     const dateIndexMap = getDateIndexMap(stageData);
     const dateButtons = Object.keys(dateIndexMap).map(date => [{ text: date, callback_data: `date_${stage}_${date}` }]);
 
-    if (message.text !== 'Выбери дату:') {
-      bot.editMessageText('Выбери дату:', { chat_id: message.chat.id, message_id: message.message_id, reply_markup: { inline_keyboard: [...dateButtons, [{ text: 'Назад', callback_data: 'back_to_scenes' }]] } });
-    }
+    bot.editMessageText('Выбери дату:', { chat_id: message.chat.id, message_id: message.message_id, reply_markup: { inline_keyboard: [...dateButtons, [{ text: 'Назад', callback_data: 'back_to_scenes' }]] } });
   } else if (data.startsWith('date_')) {
     const [_, stage, date] = data.split('_');
     const stageData = await getSheetData(stage);
@@ -162,9 +155,7 @@ bot.on('callback_query', async (callbackQuery) => {
       response += `<b>${row[1]}</b> - ${row[2]}\n`;
     });
 
-    if (message.text !== response) {
-      bot.editMessageText(response, { chat_id: message.chat.id, message_id: message.message_id, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: 'Назад', callback_data: `stage_${stage}` }]] } });
-    }
+    bot.editMessageText(response, { chat_id: message.chat.id, message_id: message.message_id, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: 'Назад', callback_data: `stage_${stage}` }]] } });
   } else if (data === 'back_to_scenes') {
     const options = {
       reply_markup: {
@@ -181,9 +172,7 @@ bot.on('callback_query', async (callbackQuery) => {
         ],
       },
     };
-    if (message.text !== 'Выбери сцену:') {
-      bot.editMessageText('Выбери сцену:', { chat_id: message.chat.id, message_id: message.message_id, ...options });
-    }
+    bot.editMessageText('Выбери сцену:', { chat_id: message.chat.id, message_id: message.message_id, ...options });
   } else {
     const stage = data;
     const stageData = await getSheetData(stage);
@@ -196,20 +185,8 @@ bot.on('callback_query', async (callbackQuery) => {
     const dateIndexMap = getDateIndexMap(stageData);
     const dateButtons = Object.keys(dateIndexMap).map(date => [{ text: date, callback_data: `date_${stage}_${date}` }]);
 
-    if (message.text !== 'Выбери дату:') {
-      bot.editMessageText('Выбери дату:', { chat_id: message.chat.id, message_id: message.message_id, reply_markup: { inline_keyboard: [...dateButtons, [{ text: 'Назад', callback_data: 'back_to_scenes' }]] } });
-    }
+    bot.editMessageText('Выбери дату:', { chat_id: message.chat.id, message_id: message.message_id, reply_markup: { inline_keyboard: [...dateButtons, [{ text: 'Назад', callback_data: 'back_to_scenes' }]] } });
   }
 });
 
-const app = express();
-app.use(bodyParser.json());
-
-app.post(`/bot${TOKEN}`, (req, res) => {
-  bot.processUpdate(req.body);
-  res.sendStatus(200);
-});
-
-app.listen(process.env.PORT || 8443, () => {
-  console.log(`Server is running on port ${process.env.PORT || 8443}`);
-});
+console.log('Бот успешно запущен и готов к работе');
