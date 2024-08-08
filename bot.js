@@ -1,15 +1,21 @@
 require('dotenv').config();
-
 const TelegramBot = require('node-telegram-bot-api');
+const express = require('express');
+const bodyParser = require('body-parser');
 const { google } = require('googleapis');
 
-// Используйте переменные из .env
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const APP_URL = process.env.APP_URL;
 const GOOGLE_CLIENT_EMAIL = process.env.GOOGLE_CLIENT_EMAIL;
 const GOOGLE_PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n');
 
-const bot = new TelegramBot(TOKEN, { polling: true });
+const bot = new TelegramBot(TOKEN, {
+  webHook: {
+    port: process.env.PORT || 8443
+  }
+});
+
+bot.setWebHook(`${APP_URL}/bot${TOKEN}`);
 
 const client = new google.auth.JWT(
   GOOGLE_CLIENT_EMAIL,
@@ -196,4 +202,14 @@ bot.on('callback_query', async (callbackQuery) => {
   }
 });
 
-console.log('Бот успешно запущен и готов к работе');
+const app = express();
+app.use(bodyParser.json());
+
+app.post(`/bot${TOKEN}`, (req, res) => {
+  bot.processUpdate(req.body);
+  res.sendStatus(200);
+});
+
+app.listen(process.env.PORT || 8443, () => {
+  console.log(`Server is running on port ${process.env.PORT || 8443}`);
+});
