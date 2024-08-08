@@ -90,13 +90,17 @@ bot.on('callback_query', async (callbackQuery) => {
         ],
       },
     };
-    bot.editMessageText('Выбери сцену:', { chat_id: message.chat.id, message_id: message.message_id, ...options });
+    if (message.text !== 'Выбери сцену:') {
+      bot.editMessageText('Выбери сцену:', { chat_id: message.chat.id, message_id: message.message_id, ...options });
+    }
   } else if (data === 'events') {
     const eventsData = await getSheetData('События');
     const dateIndexMap = getDateIndexMap(eventsData);
     const dateButtons = Object.keys(dateIndexMap).map(date => [{ text: date, callback_data: `event_date_${date}` }]);
 
-    bot.editMessageText('Выбери дату:', { chat_id: message.chat.id, message_id: message.message_id, reply_markup: { inline_keyboard: [...dateButtons, [{ text: 'Назад', callback_data: 'back_to_main' }]] } });
+    if (message.text !== 'Выбери дату:') {
+      bot.editMessageText('Выбери дату:', { chat_id: message.chat.id, message_id: message.message_id, reply_markup: { inline_keyboard: [...dateButtons, [{ text: 'Назад', callback_data: 'back_to_main' }]] } });
+    }
   } else if (data.startsWith('event_date_')) {
     const date = data.split('_')[2];
     const eventsData = await getSheetData('События');
@@ -108,7 +112,9 @@ bot.on('callback_query', async (callbackQuery) => {
       response += `<b>${row[1]}</b> - ${row[2]}\n<b>Место</b>: ${row[3]}\n\n`;
     });
 
-    bot.editMessageText(response, { chat_id: message.chat.id, message_id: message.message_id, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: 'Назад', callback_data: 'events' }]] } });
+    if (message.text !== response) {
+      bot.editMessageText(response, { chat_id: message.chat.id, message_id: message.message_id, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: 'Назад', callback_data: 'events' }]] } });
+    }
   } else if (data === 'back_to_main') {
     const welcomeMessage = "Привет, рейвер! Этот бот поможет тебе узнать расписание сетов на всех сценах Signalа. Выбери нужную сцену или получи инфо о событиях на территории.";
 
@@ -121,7 +127,9 @@ bot.on('callback_query', async (callbackQuery) => {
       },
     };
 
-    bot.editMessageText(welcomeMessage, { chat_id: message.chat.id, message_id: message.message_id, ...options });
+    if (message.text !== welcomeMessage) {
+      bot.editMessageText(welcomeMessage, { chat_id: message.chat.id, message_id: message.message_id, ...options });
+    }
   } else if (data.startsWith('stage_')) {
     const stage = data.split('_')[1];
     const stageData = await getSheetData(stage);
@@ -134,7 +142,9 @@ bot.on('callback_query', async (callbackQuery) => {
     const dateIndexMap = getDateIndexMap(stageData);
     const dateButtons = Object.keys(dateIndexMap).map(date => [{ text: date, callback_data: `date_${stage}_${date}` }]);
 
-    bot.editMessageText('Выбери дату:', { chat_id: message.chat.id, message_id: message.message_id, reply_markup: { inline_keyboard: [...dateButtons, [{ text: 'Назад', callback_data: 'back_to_scenes' }]] } });
+    if (message.text !== 'Выбери дату:') {
+      bot.editMessageText('Выбери дату:', { chat_id: message.chat.id, message_id: message.message_id, reply_markup: { inline_keyboard: [...dateButtons, [{ text: 'Назад', callback_data: 'back_to_scenes' }]] } });
+    }
   } else if (data.startsWith('date_')) {
     const [_, stage, date] = data.split('_');
     const stageData = await getSheetData(stage);
@@ -146,7 +156,9 @@ bot.on('callback_query', async (callbackQuery) => {
       response += `<b>${row[1]}</b> - ${row[2]}\n`;
     });
 
-    bot.editMessageText(response, { chat_id: message.chat.id, message_id: message.message_id, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: 'Назад', callback_data: `stage_${stage}` }]] } });
+    if (message.text !== response) {
+      bot.editMessageText(response, { chat_id: message.chat.id, message_id: message.message_id, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: 'Назад', callback_data: `stage_${stage}` }]] } });
+    }
   } else if (data === 'back_to_scenes') {
     const options = {
       reply_markup: {
@@ -163,7 +175,9 @@ bot.on('callback_query', async (callbackQuery) => {
         ],
       },
     };
-    bot.editMessageText('Выбери сцену:', { chat_id: message.chat.id, message_id: message.message_id, ...options });
+    if (message.text !== 'Выбери сцену:') {
+      bot.editMessageText('Выбери сцену:', { chat_id: message.chat.id, message_id: message.message_id, ...options });
+    }
   } else {
     const stage = data;
     const stageData = await getSheetData(stage);
@@ -176,7 +190,9 @@ bot.on('callback_query', async (callbackQuery) => {
     const dateIndexMap = getDateIndexMap(stageData);
     const dateButtons = Object.keys(dateIndexMap).map(date => [{ text: date, callback_data: `date_${stage}_${date}` }]);
 
-    bot.editMessageText('Выбери дату:', { chat_id: message.chat.id, message_id: message.message_id, reply_markup: { inline_keyboard: [...dateButtons, [{ text: 'Назад', callback_data: 'back_to_scenes' }]] } });
+    if (message.text !== 'Выбери дату:') {
+      bot.editMessageText('Выбери дату:', { chat_id: message.chat.id, message_id: message.message_id, reply_markup: { inline_keyboard: [...dateButtons, [{ text: 'Назад', callback_data: 'back_to_scenes' }]] } });
+    }
   }
 });
 
