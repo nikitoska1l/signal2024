@@ -1,17 +1,18 @@
-require('dotenv').config();
-
 const TelegramBot = require('node-telegram-bot-api');
 const { google } = require('googleapis');
+const keys = require('./service-account-key.json'); // путь к вашему JSON-файлу
+require('dotenv').config();
 
-const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
-const googleServiceAccountKey = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY);
+const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const bot = new TelegramBot(TOKEN, { webHook: true });
 
-const bot = new TelegramBot(telegramBotToken, { polling: true });
+const url = process.env.APP_URL; // URL вашего приложения на Render
+bot.setWebHook(`${url}/bot${TOKEN}`);
 
 const client = new google.auth.JWT(
-  googleServiceAccountKey.client_email,
+  keys.client_email,
   null,
-  googleServiceAccountKey.private_key,
+  keys.private_key,
   ['https://www.googleapis.com/auth/spreadsheets']
 );
 
