@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const TelegramBot = require('node-telegram-bot-api');
 const { google } = require('googleapis');
-const fs = require('fs')
+const service_account_key = require('./service-account-key.json');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -23,7 +23,7 @@ function dumpError(err) {
 }
 
 try {
-  const serviceAccountKey = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY);
+  const serviceAccountKey = JSON.parse(service_account_key);
 
   const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
   const bot = new TelegramBot(TOKEN, { polling: true });
