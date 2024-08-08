@@ -1,11 +1,16 @@
 require('dotenv').config();
+const express = require('express');
 const TelegramBot = require('node-telegram-bot-api');
 const { google } = require('googleapis');
 
+const app = express();
+const PORT = process.env.PORT || 10000;
+
+const serviceAccountKey = JSON.parse(process.env.SERVICE_ACCOUNT_KEY);
+
+// Токен Telegram-бота из переменных окружения
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const bot = new TelegramBot(TOKEN, { polling: true });
-
-const serviceAccountKey = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY);
 
 const client = new google.auth.JWT(
   serviceAccountKey.client_email,
@@ -15,8 +20,7 @@ const client = new google.auth.JWT(
 );
 
 const sheets = google.sheets({ version: 'v4', auth: client });
-
-const SPREADSHEET_ID = '1qNp9fVSdSV5pX_KLtgKkiSf6byl0LjEQOwmI3EU2BF0';
+const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
 
 async function getSheetData(sheetName, range = 'A2:D') {
   const request = {
@@ -160,25 +164,9 @@ bot.on('callback_query', async (callbackQuery) => {
       },
     };
     bot.editMessageText('Выбери сцену:', { chat_id: message.chat.id, message_id: message.message_id, ...options });
-  } else {
-    const stage = data;
-    const stageData = await getSheetData(stage);
-
-    if (stageData.length === 0) {
-      bot.editMessageText('Данные не найдены или произошла ошибка при получении данных.', { chat_id: message.chat.id, message_id: message.message_id, reply_markup: { inline_keyboard: [[{ text: 'Назад', callback_data: 'back_to_scenes' }]] } });
-      return;
-    }
-
-    const dateIndexMap = getDateIndexMap(stageData);
-    const dateButtons = Object.keys(dateIndexMap).map(date => [{ text: date, callback_data: `date_${stage}_${date}` }]);
-
-    bot.editMessageText('Выбери дату:', { chat_id: message.chat.id, message_id: message.message_id, reply_markup: { inline_keyboard: [...dateButtons, [{ text: 'Назад', callback_data: 'back_to_scenes' }]] } });
   }
 });
 
-const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
-
-console.log('Бот успешно запущен и готов к работе');
