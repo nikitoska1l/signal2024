@@ -9,7 +9,6 @@ const PORT = process.env.PORT || 10000;
 try {
   const serviceAccountKey = JSON.parse(process.env.SERVICE_ACCOUNT_KEY);
 
-  // Токен Telegram-бота из переменных окружения
   const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
   const bot = new TelegramBot(TOKEN, { polling: true });
 
