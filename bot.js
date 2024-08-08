@@ -2,7 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const TelegramBot = require('node-telegram-bot-api');
 const { google } = require('googleapis');
-const keys = require('./service-account-key.json');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 const port = process.env.PORT || 10000;
@@ -14,6 +15,14 @@ app.listen(port, () => {
 // Telegram Bot token
 const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
 const bot = new TelegramBot(telegramBotToken, { polling: true });
+
+// Load Google Service Account Key from environment variable
+const serviceAccountKeyPath = path.join(__dirname, process.env.GOOGLE_APPLICATION_CREDENTIALS);
+if (!fs.existsSync(serviceAccountKeyPath)) {
+  console.error(`Service account key file not found at ${serviceAccountKeyPath}`);
+  process.exit(1);
+}
+const keys = require(serviceAccountKeyPath);
 
 // Google Sheets API setup
 const client = new google.auth.JWT(
