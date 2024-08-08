@@ -6,6 +6,21 @@ const { google } = require('googleapis');
 const app = express();
 const PORT = process.env.PORT || 10000;
 
+function dumpError(err) { 
+  if (typeof err === 'object') { 
+    if (err.message) { 
+      console.log('\nMessage: ' + err.message) 
+    } 
+    if (err.stack) { 
+      console.log('\nStacktrace:') 
+      console.log('====================') 
+      console.log(err.stack); 
+    } 
+  } else { 
+    console.log('dumpError :: argument is not an object'); 
+  } 
+}
+
 try {
   const serviceAccountKey = JSON.parse(process.env.SERVICE_ACCOUNT_KEY);
 
@@ -184,6 +199,6 @@ try {
     console.log(`Server is running on port ${PORT}`);
   });
 } catch (error) {
-  console.error("Service account key file not found or invalid:", error);
+  dumpError(error);
   process.exit(1);
 }
