@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const TelegramBot = require('node-telegram-bot-api');
 const { google } = require('googleapis');
-const keys = require('./signal2024-8837ba937aa9.json');
+const keys = require('./service-account-key.json');
 
 const app = express();
 const port = process.env.PORT || 10000;
@@ -163,7 +163,7 @@ bot.on('callback_query', async (callbackQuery) => {
     const options = {
       reply_markup: {
         inline_keyboard: [
-          [{ text: 'Möbius', callback_data: 'Möbius' }],
+        [{ text: 'Möbius', callback_data: 'Möbius' }],
           [{ text: 'Meadow', callback_data: 'Meadow' }],
           [{ text: 'Kiosko', callback_data: 'Kiosko' }],
           [{ text: 'Signal', callback_data: 'Signal' }],
