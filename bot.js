@@ -1,20 +1,25 @@
 require('dotenv').config();
-
+const express = require('express');
 const TelegramBot = require('node-telegram-bot-api');
 const { google } = require('googleapis');
+const keys = require('./signal2024-8837ba937aa9.json');
 
+const app = express();
+const port = process.env.PORT || 10000;
+
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
+
+// Telegram Bot token
 const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
-const googleClientEmail = process.env.GOOGLE_CLIENT_EMAIL;
-const googlePrivateKey = process.env.GOOGLE_PRIVATE_KEY;
-
-// Создайте бота
 const bot = new TelegramBot(telegramBotToken, { polling: true });
 
-// Настройка аутентификации Google
+// Google Sheets API setup
 const client = new google.auth.JWT(
-  googleClientEmail,
+  keys.client_email,
   null,
-  googlePrivateKey.replace(/\\n/g, '\n'),
+  keys.private_key,
   ['https://www.googleapis.com/auth/spreadsheets']
 );
 
@@ -22,6 +27,7 @@ const sheets = google.sheets({ version: 'v4', auth: client });
 
 const SPREADSHEET_ID = '1qNp9fVSdSV5pX_KLtgKkiSf6byl0LjEQOwmI3EU2BF0';
 
+// Helper function to get data from a specific sheet and range
 async function getSheetData(sheetName, range = 'A2:D') {
   const request = {
     spreadsheetId: SPREADSHEET_ID,
@@ -37,6 +43,7 @@ async function getSheetData(sheetName, range = 'A2:D') {
   }
 }
 
+// Helper function to map dates to their respective rows
 function getDateIndexMap(data) {
   const dateIndexMap = {};
   let currentDate = null;
@@ -54,6 +61,7 @@ function getDateIndexMap(data) {
   return dateIndexMap;
 }
 
+// Start command
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
   const welcomeMessage = "Привет, рейвер! Этот бот поможет тебе узнать расписание сетов на всех сценах Signalа. Выбери нужную сцену или получи инфо о событиях на территории.";
@@ -70,6 +78,7 @@ bot.onText(/\/start/, (msg) => {
   bot.sendMessage(chatId, welcomeMessage, options);
 });
 
+// Callback query handler
 bot.on('callback_query', async (callbackQuery) => {
   const message = callbackQuery.message;
   const data = callbackQuery.data;
@@ -93,7 +102,9 @@ bot.on('callback_query', async (callbackQuery) => {
     bot.editMessageText('Выбери сцену:', { chat_id: message.chat.id, message_id: message.message_id, ...options });
   } else if (data === 'events') {
     const eventsData = await getSheetData('События');
+    console.log('Events Data:', eventsData);
     const dateIndexMap = getDateIndexMap(eventsData);
+    console.log('Date Index Map:', dateIndexMap);
     const dateButtons = Object.keys(dateIndexMap).map(date => [{ text: date, callback_data: `event_date_${date}` }]);
 
     bot.editMessageText('Выбери дату:', { chat_id: message.chat.id, message_id: message.message_id, reply_markup: { inline_keyboard: [...dateButtons, [{ text: 'Назад', callback_data: 'back_to_main' }]] } });
@@ -125,6 +136,7 @@ bot.on('callback_query', async (callbackQuery) => {
   } else if (data.startsWith('stage_')) {
     const stage = data.split('_')[1];
     const stageData = await getSheetData(stage);
+    console.log(`Data for stage ${stage}:`, stageData);
 
     if (stageData.length === 0) {
       bot.editMessageText('Данные не найдены или произошла ошибка при получении данных.', { chat_id: message.chat.id, message_id: message.message_id, reply_markup: { inline_keyboard: [[{ text: 'Назад', callback_data: 'back_to_scenes' }]] } });
@@ -167,6 +179,7 @@ bot.on('callback_query', async (callbackQuery) => {
   } else {
     const stage = data;
     const stageData = await getSheetData(stage);
+    console.log(`Data for stage ${stage}:`, stageData);
 
     if (stageData.length === 0) {
       bot.editMessageText('Данные не найдены или произошла ошибка при получении данных.', { chat_id: message.chat.id, message_id: message.message_id, reply_markup: { inline_keyboard: [[{ text: 'Назад', callback_data: 'back_to_scenes' }]] } });
@@ -180,14 +193,4 @@ bot.on('callback_query', async (callbackQuery) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
-const express = require('express');
-const app = express();
-
-app.get('/', (req, res) => {
-  res.send('Telegram Bot is running');
-});
-
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+console.log('Бот успешно запущен и готов к работе');
