@@ -22,7 +22,7 @@ function dumpError(err) {
 }
 
 try {
-  const serviceAccountKey = JSON.parse(process.env.SERVICE_ACCOUNT_KEY);
+  const serviceAccountKey = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY);
 
   const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
   const bot = new TelegramBot(TOKEN, { polling: true });
