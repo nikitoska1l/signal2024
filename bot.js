@@ -1,35 +1,26 @@
 require('dotenv').config();
-const express = require('express');
+
 const TelegramBot = require('node-telegram-bot-api');
 const { google } = require('googleapis');
-const keys = require('./service-account-key.json'); // путь к вашему JSON-файлу
 
-const app = express();
-const port = process.env.PORT || 3000;
+const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
+const googleClientEmail = process.env.GOOGLE_CLIENT_EMAIL;
+const googlePrivateKey = process.env.GOOGLE_PRIVATE_KEY;
 
-// Настройка сервера Express
-app.get('/', (req, res) => {
-  res.send('Bot is running!');
-});
+// Создайте бота
+const bot = new TelegramBot(telegramBotToken, { polling: true });
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
-
-// Замените на ваш токен бота
-const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const bot = new TelegramBot(TOKEN, { polling: true });
-
+// Настройка аутентификации Google
 const client = new google.auth.JWT(
-  keys.client_email,
+  googleClientEmail,
   null,
-  keys.private_key,
+  googlePrivateKey.replace(/\\n/g, '\n'),
   ['https://www.googleapis.com/auth/spreadsheets']
 );
 
 const sheets = google.sheets({ version: 'v4', auth: client });
 
-const SPREADSHEET_ID = process.env.SPREADSHEET_ID; // ID вашей таблицы
+const SPREADSHEET_ID = '1qNp9fVSdSV5pX_KLtgKkiSf6byl0LjEQOwmI3EU2BF0';
 
 async function getSheetData(sheetName, range = 'A2:D') {
   const request = {
@@ -189,4 +180,14 @@ bot.on('callback_query', async (callbackQuery) => {
   }
 });
 
-console.log('Бот успешно запущен и готов к работе');
+const PORT = process.env.PORT || 3000;
+const express = require('express');
+const app = express();
+
+app.get('/', (req, res) => {
+  res.send('Telegram Bot is running');
+});
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
