@@ -3,6 +3,7 @@ const express = require('express');
 const TelegramBot = require('node-telegram-bot-api');
 const { google } = require('googleapis');
 const service_account_key = require('./service-account-key.json');
+const fs = require(fs);
 
 const app = express();
 const PORT = process.env.PORT || 10000;
