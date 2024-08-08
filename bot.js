@@ -198,7 +198,25 @@ try {
   app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
   });
-} catch (error) {
-  dumpError(error);
+} catch (e) {
+    console.warn('Error:', e.message)
+
+    // We iterate through all the files 
+    // mentioned in the error stack and 
+    // find the line and line number 
+    // that resulted in the error
+    e.stack
+        .split('\n')
+        .slice(1)
+        .map(r => r.match(/\((?<file>.*):(?<line>\d+):(?<pos>\d+)\)/))
+        .forEach(r => {
+            if (r && r.groups && r.groups.file.substr(0, 8) !== 'internal') 
+            {
+                const { file, line, pos } = r.groups
+                const f = fs.readFileSync(file, 'utf8').split('\n')
+                console.warn('  ', file, 'at', line + ':' + pos)
+                console.warn('    ', f[line - 1].trim())
+            }
+        })
   process.exit(1);
 }
