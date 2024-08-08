@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const TelegramBot = require('node-telegram-bot-api');
 const { google } = require('googleapis');
+const fs = require('fs')
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -213,7 +214,7 @@ try {
             if (r && r.groups && r.groups.file.substr(0, 8) !== 'internal') 
             {
                 const { file, line, pos } = r.groups
-                const f = f.readFileSync(file, 'utf8').split('\n')
+                const f = fs.readFileSync(file, 'utf8').split('\n')
                 console.warn('  ', file, 'at', line + ':' + pos)
                 console.warn('    ', f[line - 1].trim())
             }
