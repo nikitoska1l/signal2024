@@ -213,7 +213,7 @@ try {
             if (r && r.groups && r.groups.file.substr(0, 8) !== 'internal') 
             {
                 const { file, line, pos } = r.groups
-                const f = fs.readFileSync(file, 'utf8').split('\n')
+                const f = f.readFileSync(file, 'utf8').split('\n')
                 console.warn('  ', file, 'at', line + ':' + pos)
                 console.warn('    ', f[line - 1].trim())
             }
